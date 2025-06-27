@@ -18,7 +18,7 @@
       overflow: hidden;
     }
 
-    /* Бабочка */
+    /* Форма бабочек (или просто фигурки) */
     .butterfly {
       position: absolute;
       width: 60px;
@@ -29,22 +29,23 @@
       color: white;
       font-weight: bold;
       user-select: none;
-      animation: floatUp 10s linear infinite;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      animation: fall linear forwards;
     }
 
     .butterfly.correct {
-      background: url('https://i.imgur.com/Q97YUkP.png ') no-repeat center;
-      background-size: contain;
+      background-image: url('https://i.imgur.com/Q97YUkP.png '); /* Красивая бабочка */
     }
 
     .butterfly.incorrect {
-      background: url('https://i.imgur.com/rV6QfEw.png ') no-repeat center;
-      background-size: contain;
+      background-image: url('https://i.imgur.com/rV6QfEw.png '); /* Мрачная бабочка */
     }
 
-    @keyframes floatUp {
-      from { transform: translateY(0px) rotate(0deg); }
-      to { transform: translateY(-800px) rotate(360deg); }
+    @keyframes fall {
+      from { top: -100px; }
+      to { top: 100vh; }
     }
 
     #troll {
@@ -57,7 +58,7 @@
       pointer-events: none;
     }
 
-     #scoreboard {
+    #scoreboard {
       position: absolute;
       top: 10px;
       left: 10px;
@@ -93,18 +94,6 @@
     @keyframes fadeOut {
       from { opacity: 1; }
       to { opacity: 0; }
-    }
-
-    .float {
-      animation: wiggle 3s ease-in-out infinite;
-    }
-
-    @keyframes wiggle {
-      0%   { transform: translateX(0px); }
-      25%  { transform: translateX(10px); }
-      50%  { transform: translateX(0px); }
-      75%  { transform: translateX(-10px); }
-      100% { transform: translateX(0px); }
     }
   </style>
 </head>
@@ -146,7 +135,7 @@
     basket.style.top = `${y + 30}px`;
   });
 
-  // Создание бабочки
+  // Создание слова в виде бабочки
   function spawnButterfly() {
     if (!gameActive) return;
 
@@ -162,29 +151,24 @@
     butterfly.dataset.correct = isCorrect;
     butterfly.className += isCorrect ? " correct" : " incorrect";
 
-    // Появление бабочки в случайном месте внизу экрана
-    butterfly.style.left = `${Math.random() * window.innerWidth}px`;
-    butterfly.style.bottom = `0px`;
+    // Появление случайно по горизонтали сверху
+    butterfly.style.left = `${Math.random() * (window.innerWidth - 60)}px`;
+    butterfly.style.top = "-100px";
 
-    // Немного вращения и движения
-    butterfly.style.transform = `rotate(${Math.random() * 20 - 10}deg)`;
-    butterfly.style.animationDuration = `${Math.random() * 2 + 4}s`;
+    // Медленное падение
+    const duration = 8000; // мс
+    butterfly.style.animationDuration = `${duration}ms`;
 
     game.appendChild(butterfly);
 
-    // Запуск анимации полёта вверх
-    butterfly.style.transition = "bottom 6s linear, transform 6s linear";
-    butterfly.style.bottom = `-100px`; // улетает вверх
-    butterfly.style.transform = `rotate(${Math.random() * 20 - 10}deg)`;
-
-    // Удаление после завершения полёта
+    // Удаление после завершения полета
     setTimeout(() => {
       if (!butterfly.collected && butterfly.dataset.correct === "true") {
         errors++;
         updateScore();
       }
       butterfly.remove();
-    }, 6000);
+    }, duration);
   }
 
   // Проверка столкновений
@@ -257,17 +241,6 @@
       location.reload();
     }
   }, 1000);
-
-  // Инициализация тролля и корзины
-  document.addEventListener("mousemove", e => {
-    const x = e.clientX;
-    const y = e.clientY;
-    troll.style.left = `${x - 40}px`;
-    troll.style.top = `${y - 40}px`;
-
-    basket.style.left = `${x - 35}px`;
-    basket.style.top = `${y + 30}px`;
-  });
 </script>
 </body>
 </html>
