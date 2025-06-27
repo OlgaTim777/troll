@@ -21,33 +21,34 @@
     .pipe {
       position: absolute;
       width: 10px;
-      height: 400px;
+      height: 300px;
       background: linear-gradient(to bottom, #aaa, #eee);
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
       transform-origin: top center;
     }
 
+    /* Расположение труб по углам */
     .pipe.top-left {
-      top: -300px;
+      top: 50px;
       left: 50px;
       transform: rotate(30deg);
     }
 
     .pipe.top-right {
-      top: -300px;
+      top: 50px;
       right: 50px;
       transform: rotate(-30deg);
     }
 
     .pipe.bottom-left {
-      bottom: -300px;
+      bottom: 50px;
       left: 50px;
       transform: rotate(-30deg) scaleY(-1);
     }
 
     .pipe.bottom-right {
-      bottom: -300px;
+      bottom: 50px;
       right: 50px;
       transform: rotate(30deg) scaleY(-1);
     }
@@ -62,11 +63,11 @@
       background-color: #f44336;
       border-radius: 10px;
       box-shadow: inset 0 -2px 5px rgba(0, 0, 0, 0.5), 0 3px 6px rgba(0, 0, 0, 0.3);
-      animation: rollDown cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+      animation: fall linear forwards;
     }
 
-    @keyframes rollDown {
-      from { top: -50%; }
+    @keyframes fall {
+      from { top: 0; }
       to { top: 95%; }
     }
 
@@ -74,10 +75,10 @@
       position: absolute;
       width: 80px;
       height: 80px;
-      background: url('https://i.imgur.com/VmW5HRi.png') no-repeat center;
+      background:url('https://i.imgur.com/VmW5HRi.png') no-repeat center;
       background-size: contain;
       z-index: 5;
-      transition: transform 0.2s ease;
+      pointer-events: none;
     }
 
     #basket {
@@ -94,6 +95,18 @@
       position: absolute;
       top: 10px;
       left: 10px;
+      color: black;
+      font-size: 20px;
+      background: rgba(255,255,255,0.7);
+      padding: 10px;
+      border-radius: 10px;
+      z-index: 10;
+    }
+
+    #timer {
+      position: absolute;
+      top: 10px;
+      right: 10px;
       color: black;
       font-size: 20px;
       background: rgba(255,255,255,0.7);
@@ -120,6 +133,7 @@
 <body>
 <div id="game">
   <div id="scoreboard">Правильных: <span id="correct">0</span>, Ошибок: <span id="wrong">0</span></div>
+  <div id="timer">Осталось времени: <span id="time">180</span> сек.</div>
 
   <!-- Трубы -->
   <div class="pipe top-left"></div>
@@ -142,48 +156,28 @@
 
   const correctCount = document.getElementById("correct");
   const wrongCount = document.getElementById("wrong");
+  const timerDisplay = document.getElementById("time");
 
   let score = 0;
   let errors = 0;
-  const maxErrors = 5;
+  let timeLeft = 180; // 3 минуты
+  let gameActive = true;
 
-  // Позиция тролля
-  let trollX = window.innerWidth / 2 - 40;
-  let trollY = window.innerHeight / 2 - 40;
+  // Следование за курсором
+  document.addEventListener("mousemove", e => {
+    const x = e.clientX;
+    const y = e.clientY;
+    troll.style.left = `${x - 40}px`;
+    troll.style.top = `${y - 40}px`;
 
-  // Скорость перемещения
-  const speed = 20;
-
-  // Обновление позиции тролля и корзины
-  function updatePosition() {
-    troll.style.left = trollX + "px";
-    troll.style.top = trollY + "px";
-
-    basket.style.left = (trollX + 5) + "px";
-    basket.style.top = (trollY + 60) + "px";
-  }
-
-  // Управление троллем
-  document.addEventListener("keydown", e => {
-    switch (e.key) {
-      case "ArrowLeft":
-        if (trollX > 0) trollX -= speed;
-        break;
-      case "ArrowRight":
-        if (trollX < window.innerWidth - 80) trollX += speed;
-        break;
-      case "ArrowUp":
-        if (trollY > 0) trollY -= speed;
-        break;
-      case "ArrowDown":
-        if (trollY < window.innerHeight - 80) trollY += speed;
-        break;
-    }
-    updatePosition();
+    basket.style.left = `${x - 35}px`;
+    basket.style.top = `${y + 30}px`;
   });
 
   // Создание слова
   function spawnWord(pipeType) {
+    if (!gameActive) return;
+
     const pipeEl = document.querySelector(`.pipe.${pipeType}`);
     const rect = pipeEl.getBoundingClientRect();
 
@@ -200,40 +194,24 @@
     word.style.left = `${rect.left}px`;
     word.style.top = `${rect.top}px`;
 
+    // Медленное движение
+    word.style.animationDuration = "6s";
+
     game.appendChild(word);
 
-    let offsetX = 0;
-    let offsetY = 0;
-
-    switch (pipeType) {
-      case "top-left": offsetX = 100; offsetY = 300; break;
-      case "top-right": offsetX = -100; offsetY = 300; break;
-      case "bottom-left": offsetX = 100; offsetY = -300; break;
-      case "bottom-right": offsetX = -100; offsetY = -300; break;
-    }
-
-    word.animate([
-      { transform: `translate(0, 0)` },
-      { transform: `translate(${offsetX}px, ${offsetY}px)` }
-    ], {
-      duration: 5000,
-      easing: "cubic-bezier(0.4, 0.0, 0.2, 1)"
-    });
-
     setTimeout(() => {
-      if (!word.collected) {
-        if (word.dataset.correct === "true") {
-          errors++;
-          updateScore();
-          if (errors >= maxErrors) gameOver();
-        }
+      if (!word.collected && word.dataset.correct === "true") {
+        errors++;
+        updateScore();
       }
       word.remove();
-    }, 5000);
+    }, 6000);
   }
 
   // Проверка столкновений
   setInterval(() => {
+    if (!gameActive) return;
+
     const words = document.querySelectorAll(".word");
     const basketRect = basket.getBoundingClientRect();
 
@@ -256,7 +234,6 @@
         } else {
           errors++;
           errorSound.play();
-          if (errors >= maxErrors) gameOver();
         }
 
         updateScore();
@@ -279,13 +256,6 @@
     setTimeout(() => fw.remove(), 1000);
   }
 
-  function gameOver() {
-    if (errors >= maxErrors) {
-      alert(`Игра окончена! Ваш счёт: ${score}`);
-    }
-    location.reload();
-  }
-
   // Тема: положительные и отрицательные слова
   const validWords = ["радость", "солнце", "весна", "счастье"];
   const invalidWords = ["печаль", "дождь", "туча", "мороз"];
@@ -295,13 +265,35 @@
   let pipeIndex = 0;
 
   setInterval(() => {
+    if (!gameActive) return;
     const pipeType = pipes[pipeIndex];
     spawnWord(pipeType);
     pipeIndex = (pipeIndex + 1) % pipes.length;
   }, 1000);
 
-  // Инициализация начальной позиции
-  updatePosition();
+  // Таймер
+  setInterval(() => {
+    if (!gameActive) return;
+    timeLeft--;
+    timerDisplay.textContent = timeLeft;
+
+    if (timeLeft <= 0) {
+      gameActive = false;
+      alert(`Игра окончена!\nПравильных: ${score}\nОшибок: ${errors}`);
+      location.reload();
+    }
+  }, 1000);
+
+  // Инициализация начальной позиции тролля и корзины
+  document.addEventListener("mousemove", e => {
+    const x = e.clientX;
+    const y = e.clientY;
+    troll.style.left = `${x - 40}px`;
+    troll.style.top = `${y - 40}px`;
+
+    basket.style.left = `${x - 35}px`;
+    basket.style.top = `${y + 30}px`;
+  });
 </script>
 </body>
 </html>
