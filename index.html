@@ -21,36 +21,36 @@
     .pipe {
       position: absolute;
       width: 10px;
-      height: 300px;
+      height: 450px; /* Увеличена длина трубы */
       background: linear-gradient(to bottom, #aaa, #eee);
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
       transform-origin: top center;
     }
 
-    /* Расположение труб по углам */
+    /* Трубы под углом 45 градусов к сторонам экрана */
     .pipe.top-left {
-      top: 50px;
+      top: -200px;
       left: 50px;
-      transform: rotate(30deg);
+      transform: rotate(45deg);
     }
 
     .pipe.top-right {
-      top: 50px;
+      top: -200px;
       right: 50px;
-      transform: rotate(-30deg);
+      transform: rotate(-45deg);
     }
 
     .pipe.bottom-left {
-      bottom: 50px;
+      bottom: -200px;
       left: 50px;
-      transform: rotate(-30deg) scaleY(-1);
+      transform: rotate(-45deg) scaleY(-1);
     }
 
     .pipe.bottom-right {
-      bottom: 50px;
+      bottom: -200px;
       right: 50px;
-      transform: rotate(30deg) scaleY(-1);
+      transform: rotate(45deg) scaleY(-1);
     }
 
     .word {
@@ -75,7 +75,7 @@
       position: absolute;
       width: 80px;
       height: 80px;
-      background:url('https://i.imgur.com/VmW5HRi.png') no-repeat center;
+      background: url('https://i.imgur.com/49yc6L5.png') no-repeat center;
       background-size: contain;
       z-index: 5;
       pointer-events: none;
@@ -85,7 +85,7 @@
       position: absolute;
       width: 70px;
       height: 50px;
-      background: url('https://i.imgur.com/KzVZqB7.png ') no-repeat center;
+      background: url('https://i.imgur.com/RmnsRAl.png') no-repeat center;
       background-size: contain;
       z-index: 4;
       pointer-events: none;
@@ -283,17 +283,6 @@
       location.reload();
     }
   }, 1000);
-
-  // Инициализация начальной позиции тролля и корзины
-  document.addEventListener("mousemove", e => {
-    const x = e.clientX;
-    const y = e.clientY;
-    troll.style.left = `${x - 40}px`;
-    troll.style.top = `${y - 40}px`;
-
-    basket.style.left = `${x - 35}px`;
-    basket.style.top = `${y + 30}px`;
-  });
 </script>
 </body>
 </html>
