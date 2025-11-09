@@ -5,12 +5,11 @@
   <title>Весёлый Троль</title>
   <style>
     body {
-  margin: 0;
-  overflow: hidden;
-  background: url('https://i.imgur.com/vbpIuRw.png') no-repeat center center fixed;
-  background-size: cover;
-  font-family: 'Comic Sans MS', sans-serif;
-}
+      margin: 0;
+      overflow: hidden;
+      background: url('https://i.imgur.com/vbpIuRw.png') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Comic Sans MS', sans-serif;
     }
 
     #game {
@@ -20,30 +19,21 @@
       overflow: hidden;
     }
 
-    /* Облако со словом */
     .butterfly {
       position: absolute;
       width: 150px;
       height: 80px;
       text-align: center;
       line-height: 80px;
-      font-size: 20px;
-      color: #000;
+      font-size: 22px;
+      color: #0044cc;
       font-weight: bold;
       user-select: none;
-      cursor: pointer;
+      cursor: default;
       background: url('https://i.imgur.com/tGViR2C.png') no-repeat center;
       background-size: contain;
       animation: fall linear forwards;
       text-shadow: 1px 1px 2px #fff;
-    }
-
-    .butterfly.correct {
-      filter: brightness(1);
-    }
-
-    .butterfly.incorrect {
-      filter: brightness(0.8);
     }
 
     @keyframes fall {
@@ -51,7 +41,6 @@
       to { top: 100vh; }
     }
 
-    /* Анимация для неверного слова (покачивание) */
     @keyframes shake {
       0% { transform: rotate(0deg); }
       25% { transform: rotate(5deg); }
@@ -70,10 +59,8 @@
       pointer-events: none;
     }
 
-    #scoreboard {
+    #scoreboard, #timer {
       position: absolute;
-      top: 10px;
-      left: 10px;
       color: black;
       font-size: 20px;
       background: rgba(255,255,255,0.7);
@@ -82,25 +69,16 @@
       z-index: 10;
     }
 
-    #timer {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      color: black;
-      font-size: 20px;
-      background: rgba(255,255,255,0.7);
-      padding: 10px;
-      border-radius: 10px;
-      z-index: 10;
-    }
+    #scoreboard { top: 10px; left: 10px; }
+    #timer { top: 10px; right: 10px; }
 
     .firework {
       position: absolute;
       width: 100px;
       height: 100px;
-      background: url('https://i.imgur.com/Yy1wPjG.gif') no-repeat center;
+      background: url('https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif') no-repeat center;
       background-size: contain;
-      animation: fadeOut 1s forwards;
+      animation: fadeOut 2s forwards;
       pointer-events: none;
     }
 
@@ -114,126 +92,129 @@
 <div id="game">
   <div id="scoreboard">Правильных: <span id="correct">0</span>, Ошибок: <span id="wrong">0</span></div>
   <div id="timer">Осталось времени: <span id="time">180</span> сек.</div>
-
   <div id="troll"></div>
 </div>
 
 <audio id="successSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
 <audio id="errorSound" src="https://www.soundjay.com/buttons/sounds/button-09.mp3"></audio>
+<audio id="fireworkSound" src="https://www.soundjay.com/explosion/sounds/explosion-03.mp3"></audio>
 
 <script>
-  const game = document.getElementById("game");
-  const troll = document.getElementById("troll");
+const game = document.getElementById("game");
+const troll = document.getElementById("troll");
+const correctCount = document.getElementById("correct");
+const wrongCount = document.getElementById("wrong");
+const timerDisplay = document.getElementById("time");
 
-  const correctCount = document.getElementById("correct");
-  const wrongCount = document.getElementById("wrong");
-  const timerDisplay = document.getElementById("time");
+let score = 0;
+let errors = 0;
+let timeLeft = 180;
+let gameActive = true;
 
-  let score = 0;
-  let errors = 0;
-  let timeLeft = 180;
-  let gameActive = true;
+const successSound = document.getElementById("successSound");
+const errorSound = document.getElementById("errorSound");
+const fireworkSound = document.getElementById("fireworkSound");
 
-  const successSound = document.getElementById("successSound");
-  const errorSound = document.getElementById("errorSound");
+document.addEventListener("mousemove", e => {
+  troll.style.left = `${e.clientX - troll.offsetWidth / 2}px`;
+  troll.style.top = `${e.clientY - troll.offsetHeight / 2}px`;
+});
 
-  // Следование тролля за курсором
-  document.addEventListener("mousemove", e => {
-    troll.style.left = `${e.clientX - 40}px`;
-    troll.style.top = `${e.clientY - 40}px`;
-  });
+const validWords = ["funny", "long", "short", "dirty", "clean", "big", "small", "nice", "old", "young", "tall", "short"];
+const invalidWords = ["run", "jump", "go", "walk", "fly", "swim", "read", "write", "see", "hear", "watch", "wash"];
 
-  // Создание падающего слова на картинке
-  function spawnButterfly() {
-    if (!gameActive) return;
+function spawnButterfly() {
+  if (!gameActive) return;
 
-    const butterfly = document.createElement("div");
-    butterfly.classList.add("butterfly");
+  const butterfly = document.createElement("div");
+  butterfly.classList.add("butterfly");
 
-    const isCorrect = Math.random() > 0.5;
-    const word = isCorrect
-      ? validWords[Math.floor(Math.random() * validWords.length)]
-      : invalidWords[Math.floor(Math.random() * invalidWords.length)];
+  const isCorrect = Math.random() > 0.5;
+  const word = isCorrect
+    ? validWords[Math.floor(Math.random() * validWords.length)]
+    : invalidWords[Math.floor(Math.random() * invalidWords.length)];
 
-    butterfly.textContent = word;
-    butterfly.dataset.correct = isCorrect;
-    butterfly.classList.add(isCorrect ? "correct" : "incorrect");
+  butterfly.textContent = word;
+  butterfly.dataset.correct = isCorrect;
 
-    // Появление сверху (случайное положение)
-    butterfly.style.left = `${Math.random() * (window.innerWidth - 150)}px`;
-    butterfly.style.top = `-100px`;
+  butterfly.style.left = `${Math.random() * (window.innerWidth - 150)}px`;
+  butterfly.style.top = `-100px`;
+  const duration = 12000;
+  butterfly.style.animationDuration = `${duration}ms`;
 
-    // Медленное падение
-    const duration = 12000; // 12 секунд
-    butterfly.style.animationDuration = `${duration}ms`;
+  game.appendChild(butterfly);
 
-    // Реакция на клик
-    butterfly.addEventListener("click", () => {
-      if (!gameActive) return;
+  const collisionCheck = setInterval(() => {
+    if (!document.body.contains(butterfly)) {
+      clearInterval(collisionCheck);
+      return;
+    }
+    const trollRect = troll.getBoundingClientRect();
+    const wordRect = butterfly.getBoundingClientRect();
+
+    const overlap = !(
+      trollRect.right < wordRect.left ||
+      trollRect.left > wordRect.right ||
+      trollRect.bottom < wordRect.top ||
+      trollRect.top > wordRect.bottom
+    );
+
+    if (overlap) {
       if (butterfly.dataset.correct === "true") {
-        // Верное слово: фейерверк и исчезновение
         successSound.play();
-        showFirework(butterfly.offsetLeft, butterfly.offsetTop);
+        fireworkSound.currentTime = 0;
+        fireworkSound.play();
+        const centerX = wordRect.left + wordRect.width / 2;
+        const centerY = wordRect.top + wordRect.height / 2;
+        showFirework(centerX - 50, centerY - 50); // только одна гифка
         score++;
         updateScore();
         butterfly.remove();
       } else {
-        // Неверное слово: покачивание и смена цвета
         errorSound.play();
         butterfly.style.animation = "shake 0.5s";
-        butterfly.style.filter = "hue-rotate(90deg)";
         errors++;
         updateScore();
         setTimeout(() => {
           butterfly.style.animation = `fall ${duration}ms linear forwards`;
-          butterfly.style.filter = "brightness(0.8)";
         }, 500);
       }
-    });
-
-    game.appendChild(butterfly);
-
-    // Удаление после падения
-    setTimeout(() => {
-      if (document.body.contains(butterfly)) butterfly.remove();
-    }, duration);
-  }
-
-  function updateScore() {
-    correctCount.textContent = score;
-    wrongCount.textContent = errors;
-  }
-
-  function showFirework(x, y) {
-    const fw = document.createElement("div");
-    fw.className = "firework";
-    fw.style.left = `${x}px`;
-    fw.style.top = `${y}px`;
-    game.appendChild(fw);
-    setTimeout(() => fw.remove(), 1000);
-  }
-
-  const validWords = ["funny", "long", "short", "dirty", "clean", "big", "small", "nice", "old", "young", "tall", "short"];
-  const invalidWords = ["run", "jump", "go", "walk", "fly", "swim", "read", "write", "see", "hear", "watch", "wash"];
-
-  // Генерация слов каждые 1.5 секунды
-  setInterval(() => {
-    if (!gameActive) return;
-    spawnButterfly();
-  }, 1500);
-
-  // Таймер
-  setInterval(() => {
-    if (!gameActive) return;
-    timeLeft--;
-    timerDisplay.textContent = timeLeft;
-
-    if (timeLeft <= 0) {
-      gameActive = false;
-      alert(`Игра окончена!\nПравильных: ${score}\nОшибок: ${errors}`);
-      location.reload();
     }
-  }, 1000);
+  }, 50);
+
+  setTimeout(() => {
+    if (document.body.contains(butterfly)) butterfly.remove();
+  }, duration);
+}
+
+function updateScore() {
+  correctCount.textContent = score;
+  wrongCount.textContent = errors;
+}
+
+function showFirework(x, y) {
+  const fw = document.createElement("div");
+  fw.className = "firework";
+  fw.style.left = `${x}px`;
+  fw.style.top = `${y}px`;
+  game.appendChild(fw);
+  setTimeout(() => fw.remove(), 2000);
+}
+
+// Генерация слов каждые 1.5 секунды
+setInterval(() => { if (gameActive) spawnButterfly(); }, 1500);
+
+// Таймер
+setInterval(() => {
+  if (!gameActive) return;
+  timeLeft--;
+  timerDisplay.textContent = timeLeft;
+  if (timeLeft <= 0) {
+    gameActive = false;
+    alert(`Игра окончена!\nПравильных: ${score}\nОшибок: ${errors}`);
+    location.reload();
+  }
+}, 1000);
 </script>
 </body>
 </html>
