@@ -5,10 +5,12 @@
   <title>Весёлый Троль</title>
   <style>
     body {
-      margin: 0;
-      overflow: hidden;
-      background: linear-gradient(to bottom, #a3d5ff, #ffffff);
-      font-family: 'Comic Sans MS', sans-serif;
+  margin: 0;
+  overflow: hidden;
+  background: url('https://i.imgur.com/3t2m7wz.jpg') no-repeat center center fixed;
+  background-size: cover;
+  font-family: 'Comic Sans MS', sans-serif;
+}
     }
 
     #game {
@@ -18,28 +20,30 @@
       overflow: hidden;
     }
 
+    /* Облако со словом */
     .butterfly {
       position: absolute;
-      width: 100px;
-      height: 50px;
+      width: 150px;
+      height: 80px;
       text-align: center;
-      line-height: 50px;
-      font-size: 18px;
-      color: white;
+      line-height: 80px;
+      font-size: 20px;
+      color: #000;
       font-weight: bold;
       user-select: none;
-      border-radius: 15px;
       cursor: pointer;
-      background: rgba(0, 0, 0, 0.4);
+      background: url('https://i.imgur.com/buL9kE3.png') no-repeat center;
+      background-size: contain;
       animation: fall linear forwards;
+      text-shadow: 1px 1px 2px #fff;
     }
 
     .butterfly.correct {
-      background: linear-gradient(45deg, #74c365, #3a8e3a);
+      filter: brightness(1);
     }
 
     .butterfly.incorrect {
-      background: linear-gradient(45deg, #ff6b6b, #c0392b);
+      filter: brightness(0.8);
     }
 
     @keyframes fall {
@@ -58,8 +62,8 @@
 
     #troll {
       position: absolute;
-      width: 180px;
-      height: 180px;
+      width: 80px;
+      height: 80px;
       background: url('https://i.imgur.com/FgGD12u.png') no-repeat center;
       background-size: contain;
       z-index: 5;
@@ -92,8 +96,8 @@
 
     .firework {
       position: absolute;
-      width: 80px;
-      height: 80px;
+      width: 100px;
+      height: 100px;
       background: url('https://i.imgur.com/Yy1wPjG.gif') no-repeat center;
       background-size: contain;
       animation: fadeOut 1s forwards;
@@ -139,7 +143,7 @@
     troll.style.top = `${e.clientY - 40}px`;
   });
 
-  // Появление слова
+  // Создание падающего слова на картинке
   function spawnButterfly() {
     if (!gameActive) return;
 
@@ -156,32 +160,33 @@
     butterfly.classList.add(isCorrect ? "correct" : "incorrect");
 
     // Появление сверху (случайное положение)
-    butterfly.style.left = `${Math.random() * (window.innerWidth - 100)}px`;
+    butterfly.style.left = `${Math.random() * (window.innerWidth - 150)}px`;
     butterfly.style.top = `-100px`;
 
     // Медленное падение
     const duration = 12000; // 12 секунд
     butterfly.style.animationDuration = `${duration}ms`;
 
-    // При клике по слову
+    // Реакция на клик
     butterfly.addEventListener("click", () => {
       if (!gameActive) return;
       if (butterfly.dataset.correct === "true") {
-        // Фейерверк
+        // Верное слово: фейерверк и исчезновение
         successSound.play();
         showFirework(butterfly.offsetLeft, butterfly.offsetTop);
         score++;
         updateScore();
         butterfly.remove();
       } else {
-        // Неверное слово — трясётся и меняет цвет
+        // Неверное слово: покачивание и смена цвета
         errorSound.play();
         butterfly.style.animation = "shake 0.5s";
-        butterfly.style.background = "linear-gradient(45deg, #ffcc00, #ff3300)";
+        butterfly.style.filter = "hue-rotate(90deg)";
         errors++;
         updateScore();
         setTimeout(() => {
           butterfly.style.animation = `fall ${duration}ms linear forwards`;
+          butterfly.style.filter = "brightness(0.8)";
         }, 500);
       }
     });
@@ -208,10 +213,10 @@
     setTimeout(() => fw.remove(), 1000);
   }
 
-  const validWords = ["радость", "солнце", "весна", "улыбка", "доброта", "мечта"];
-  const invalidWords = ["печаль", "дождь", "туча", "грусть", "буря", "мрак"];
+  const validWords = ["радость", "улыбка", "солнце", "весна", "доброта", "мечта"];
+  const invalidWords = ["печаль", "грусть", "буря", "мрак", "туча", "страх"];
 
-  // Появление слов каждые 1.5 секунды
+  // Генерация слов каждые 1.5 секунды
   setInterval(() => {
     if (!gameActive) return;
     spawnButterfly();
