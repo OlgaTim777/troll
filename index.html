@@ -21,8 +21,8 @@
 
     .butterfly {
       position: absolute;
-      width: 150px;
-      height: 80px;
+      width: 250px;
+      height: 180px;
       text-align: center;
       line-height: 80px;
       font-size: 22px;
@@ -51,8 +51,8 @@
 
     #troll {
       position: absolute;
-      width: 280px;
-      height: 280px;
+      width: 380px;
+      height: 350px;
       background: url('https://i.imgur.com/FgGD12u.png') no-repeat center;
       background-size: contain;
       z-index: 5;
@@ -123,6 +123,22 @@ document.addEventListener("mousemove", e => {
 const validWords = ["funny", "long", "short", "dirty", "clean", "big", "small", "nice", "old", "young", "tall", "short"];
 const invalidWords = ["run", "jump", "go", "walk", "fly", "swim", "read", "write", "see", "hear", "watch", "wash"];
 
+let occupiedPositions = [];
+
+function getRandomX() {
+  let x;
+  let attempts = 0;
+  do {
+    x = Math.random() * (window.innerWidth - 150);
+    attempts++;
+  } while (occupiedPositions.some(pos => Math.abs(pos - x) < 160) && attempts < 50);
+  occupiedPositions.push(x);
+  setTimeout(() => {
+    occupiedPositions = occupiedPositions.filter(pos => pos !== x);
+  }, 18000); // освобождаем через время падения
+  return x;
+}
+
 function spawnButterfly() {
   if (!gameActive) return;
 
@@ -137,12 +153,28 @@ function spawnButterfly() {
   butterfly.textContent = word;
   butterfly.dataset.correct = isCorrect;
 
-  butterfly.style.left = `${Math.random() * (window.innerWidth - 150)}px`;
+  const startX = getRandomX();
+  butterfly.style.left = `${startX}px`;
   butterfly.style.top = `-100px`;
-  const duration = 12000;
+
+  const duration = 18000; // медленное падение
   butterfly.style.animationDuration = `${duration}ms`;
 
   game.appendChild(butterfly);
+
+  // Плавное движение влево-вправо
+  const amplitude = Math.random() * 50 + 20; // амплитуда колебаний
+  const frequency = Math.random() * 0.002 + 0.001; // частота движения
+  const startTime = performance.now();
+
+  function animateSideToSide(time) {
+    if (!document.body.contains(butterfly)) return;
+    const elapsed = time - startTime;
+    const offset = Math.sin(elapsed * frequency * 2 * Math.PI) * amplitude;
+    butterfly.style.transform = `translateX(${offset}px)`;
+    requestAnimationFrame(animateSideToSide);
+  }
+  requestAnimationFrame(animateSideToSide);
 
   const collisionCheck = setInterval(() => {
     if (!document.body.contains(butterfly)) {
@@ -166,7 +198,7 @@ function spawnButterfly() {
         fireworkSound.play();
         const centerX = wordRect.left + wordRect.width / 2;
         const centerY = wordRect.top + wordRect.height / 2;
-        showFirework(centerX - 50, centerY - 50); // только одна гифка
+        showFirework(centerX - 50, centerY - 50);
         score++;
         updateScore();
         butterfly.remove();
@@ -201,8 +233,8 @@ function showFirework(x, y) {
   setTimeout(() => fw.remove(), 2000);
 }
 
-// Генерация слов каждые 1.5 секунды
-setInterval(() => { if (gameActive) spawnButterfly(); }, 1500);
+// Генерация слов каждые 2 секунды
+setInterval(() => { if (gameActive) spawnButterfly(); }, 2000);
 
 // Таймер
 setInterval(() => {
