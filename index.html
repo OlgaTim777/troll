@@ -29,7 +29,7 @@
       color: #0044cc;
       font-weight: bold;
       user-select: none;
-      cursor: default;
+      cursor: pointer;
       background: url('https://i.imgur.com/tGViR2C.png') no-repeat center;
       background-size: contain;
       animation: fall linear forwards;
@@ -39,12 +39,6 @@
     @keyframes fall {
       from { top: -100px; }
       to { top: 100vh; }
-    }
-
-    @keyframes shake {
-      0% { transform: rotate(0deg); }
-      50% { transform: rotate(2deg); }
-      100% { transform: rotate(0deg); }
     }
 
     #troll {
@@ -72,9 +66,9 @@
 
     .firework {
       position: absolute;
-      width: 200px;
-      height: 100px;
-      background: url('https://i.imgur.com/Ix0uXYU.gif') no-repeat center;
+      width: 250px;
+      height: 180px;
+      background: url('https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif') no-repeat center;
       background-size: contain;
       animation: fadeOut 2s forwards;
       pointer-events: none;
@@ -113,9 +107,10 @@ const successSound = document.getElementById("successSound");
 const errorSound = document.getElementById("errorSound");
 const fireworkSound = document.getElementById("fireworkSound");
 
+// Курсор совмещён с верхним краем троля
 document.addEventListener("mousemove", e => {
-  troll.style.left = `${e.clientX - troll.offsetWidth / 2}px`;
-  troll.style.top = `${e.clientY - troll.offsetHeight / 2}px`;
+  troll.style.left = `${e.clientX - troll.offsetWidth/2}px`;
+  troll.style.top = `${e.clientY}px`; // верх троля на курсоре
 });
 
 const validWords = ["funny", "long", "short", "dirty", "clean", "big", "small", "nice", "old", "young", "tall", "short"];
@@ -131,9 +126,7 @@ function getRandomX() {
     attempts++;
   } while (occupiedPositions.some(pos => Math.abs(pos - x) < 160) && attempts < 50);
   occupiedPositions.push(x);
-  setTimeout(() => {
-    occupiedPositions = occupiedPositions.filter(pos => pos !== x);
-  }, 18000); 
+  setTimeout(() => { occupiedPositions = occupiedPositions.filter(pos => pos !== x); }, 18000);
   return x;
 }
 
@@ -155,14 +148,14 @@ function spawnButterfly() {
   butterfly.style.left = `${startX}px`;
   butterfly.style.top = `-100px`;
 
-  const duration = 18000; // медленное падение
+  const duration = 18000;
   butterfly.style.animationDuration = `${duration}ms`;
 
   game.appendChild(butterfly);
 
-  // Медленное покачивание облака
-  const amplitude = Math.random() * 20 + 10; // небольшое колебание
-  const frequency = Math.random() * 0.0005 + 0.0002; // очень медленное
+  // Медленное колебание облака
+  const amplitude = Math.random() * 20 + 10;
+  const frequency = Math.random() * 0.0005 + 0.0002;
   const startTime = performance.now();
 
   function animateSideToSide(time) {
@@ -174,47 +167,25 @@ function spawnButterfly() {
   }
   requestAnimationFrame(animateSideToSide);
 
-  const collisionCheck = setInterval(() => {
-    if (!document.body.contains(butterfly)) {
-      clearInterval(collisionCheck);
-      return;
+  // Клик по слову
+  butterfly.addEventListener("click", () => {
+    if (!gameActive) return;
+    if (butterfly.dataset.correct === "true") {
+      successSound.play();
+      fireworkSound.currentTime = 0;
+      fireworkSound.play();
+      const rect = butterfly.getBoundingClientRect();
+      showFirework(rect.left + rect.width/2 - 50, rect.top + rect.height/2 - 50);
+      score++;
+    } else {
+      errorSound.play();
+      errors++;
     }
-    const trollRect = troll.getBoundingClientRect();
-    const wordRect = butterfly.getBoundingClientRect();
+    updateScore();
+    butterfly.remove();
+  });
 
-    const overlap = !(
-      trollRect.right < wordRect.left ||
-      trollRect.left > wordRect.right ||
-      trollRect.bottom < wordRect.top ||
-      trollRect.top > wordRect.bottom
-    );
-
-    if (overlap) {
-      if (butterfly.dataset.correct === "true") {
-        successSound.play();
-        fireworkSound.currentTime = 0;
-        fireworkSound.play();
-        const centerX = wordRect.left + wordRect.width / 2;
-        const centerY = wordRect.top + wordRect.height / 2;
-        showFirework(centerX - 50, centerY - 50);
-        score++;
-        updateScore();
-        butterfly.remove();
-      } else {
-        errorSound.play();
-        butterfly.style.animation = "shake 0.5s";
-        errors++;
-        updateScore();
-        setTimeout(() => {
-          butterfly.style.animation = `fall ${duration}ms linear forwards`;
-        }, 500);
-      }
-    }
-  }, 50);
-
-  setTimeout(() => {
-    if (document.body.contains(butterfly)) butterfly.remove();
-  }, duration);
+  setTimeout(() => { if (document.body.contains(butterfly)) butterfly.remove(); }, duration);
 }
 
 function updateScore() {
