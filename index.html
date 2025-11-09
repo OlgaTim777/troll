@@ -18,7 +18,6 @@
       overflow: hidden;
     }
 
-    /* Форма бабочек (или просто фигурки) */
     .butterfly {
       position: absolute;
       width: 60px;
@@ -36,16 +35,16 @@
     }
 
     .butterfly.correct {
-      background-image: url('https://i.imgur.com/Q97YUkP.png '); /* Красивая бабочка */
+      background-image: url('https://i.imgur.com/Q97YUkP.png');
     }
 
     .butterfly.incorrect {
-      background-image: url('https://i.imgur.com/rV6QfEw.png '); /* Мрачная бабочка */
+      background-image: url('https://i.imgur.com/rV6QfEw.png');
     }
 
     @keyframes fall {
-      from { top: -100px; }
-      to { top: 100vh; }
+      from { transform: translateY(0); }
+      to { transform: translateY(100vh); opacity: 0.8; }
     }
 
     #troll {
@@ -86,7 +85,7 @@
       position: absolute;
       width: 50px;
       height: 50px;
-      background: url('https://i.imgur.com/Yy1wPjG.gif ') no-repeat center;
+      background: url('https://i.imgur.com/Yy1wPjG.gif') no-repeat center;
       background-size: contain;
       animation: fadeOut 1s forwards;
     }
@@ -102,13 +101,12 @@
   <div id="scoreboard">Правильных: <span id="correct">0</span>, Ошибок: <span id="wrong">0</span></div>
   <div id="timer">Осталось времени: <span id="time">180</span> сек.</div>
 
-  <!-- Тролль и корзина -->
   <div id="troll"></div>
   <div id="basket"></div>
 </div>
 
-<audio id="successSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3 "></audio>
-<audio id="errorSound" src="https://www.soundjay.com/buttons/sounds/button-09.mp3 "></audio>
+<audio id="successSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+<audio id="errorSound" src="https://www.soundjay.com/buttons/sounds/button-09.mp3"></audio>
 
 <script>
   const game = document.getElementById("game");
@@ -121,10 +119,10 @@
 
   let score = 0;
   let errors = 0;
-  let timeLeft = 180; // 3 минуты
+  let timeLeft = 180;
   let gameActive = true;
 
-  // Следование за курсором
+  // Следование тролля за курсором
   document.addEventListener("mousemove", e => {
     const x = e.clientX;
     const y = e.clientY;
@@ -135,7 +133,7 @@
     basket.style.top = `${y + 30}px`;
   });
 
-  // Создание слова в виде бабочки
+  // === Изменённая функция ===
   function spawnButterfly() {
     if (!gameActive) return;
 
@@ -143,25 +141,30 @@
     butterfly.classList.add("butterfly");
 
     const isCorrect = Math.random() > 0.5;
-    const word = isCorrect ?
-        validWords[Math.floor(Math.random() * validWords.length)] :
-        invalidWords[Math.floor(Math.random() * invalidWords.length)];
+    const word = isCorrect
+      ? validWords[Math.floor(Math.random() * validWords.length)]
+      : invalidWords[Math.floor(Math.random() * invalidWords.length)];
 
     butterfly.textContent = word;
     butterfly.dataset.correct = isCorrect;
     butterfly.className += isCorrect ? " correct" : " incorrect";
 
-    // Появление случайно по горизонтали сверху
-    butterfly.style.left = `${Math.random() * (window.innerWidth - 60)}px`;
-    butterfly.style.top = "-100px";
+    // Появление рядом с троллем (справа или слева)
+    const trollRect = troll.getBoundingClientRect();
+    const side = Math.random() < 0.5 ? "left" : "right";
+    const offsetX = 120; // отступ по горизонтали
+    const startX = side === "left" ? trollRect.left - offsetX : trollRect.right + 20;
+    const startY = trollRect.top + trollRect.height / 2 - 20;
 
-    // Медленное падение
-    const duration = 8000; // мс
-    butterfly.style.animationDuration = `${duration}ms`;
+    butterfly.style.left = `${startX}px`;
+    butterfly.style.top = `${startY}px`;
+
+    // Плавное падение вниз
+    const duration = 5000; // мс
+    butterfly.style.animation = `fall ${duration}ms linear forwards`;
 
     game.appendChild(butterfly);
 
-    // Удаление после завершения полета
     setTimeout(() => {
       if (!butterfly.collected && butterfly.dataset.correct === "true") {
         errors++;
@@ -183,10 +186,10 @@
       const bRect = butterfly.getBoundingClientRect();
 
       if (
-          bRect.bottom >= basketRect.top &&
-          bRect.left < basketRect.right &&
-          bRect.right > basketRect.left &&
-          bRect.top <= basketRect.bottom
+        bRect.bottom >= basketRect.top &&
+        bRect.left < basketRect.right &&
+        bRect.right > basketRect.left &&
+        bRect.top <= basketRect.bottom
       ) {
         butterfly.collected = true;
 
@@ -219,11 +222,10 @@
     setTimeout(() => fw.remove(), 1000);
   }
 
-  // Тема слов
   const validWords = ["радость", "солнце", "весна", "счастье"];
   const invalidWords = ["печаль", "дождь", "туча", "мороз"];
 
-  // Генерация бабочек каждую секунду
+  // Генерация слов
   setInterval(() => {
     if (!gameActive) return;
     spawnButterfly();
