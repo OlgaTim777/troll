@@ -43,9 +43,7 @@
 
     @keyframes shake {
       0% { transform: rotate(0deg); }
-      25% { transform: rotate(5deg); }
-      50% { transform: rotate(0deg); }
-      75% { transform: rotate(-5deg); }
+      50% { transform: rotate(2deg); }
       100% { transform: rotate(0deg); }
     }
 
@@ -74,9 +72,9 @@
 
     .firework {
       position: absolute;
-      width: 100px;
+      width: 200px;
       height: 100px;
-      background: url('https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif') no-repeat center;
+      background: url('https://i.imgur.com/Ix0uXYU.gif') no-repeat center;
       background-size: contain;
       animation: fadeOut 2s forwards;
       pointer-events: none;
@@ -135,7 +133,7 @@ function getRandomX() {
   occupiedPositions.push(x);
   setTimeout(() => {
     occupiedPositions = occupiedPositions.filter(pos => pos !== x);
-  }, 18000); // освобождаем через время падения
+  }, 18000); 
   return x;
 }
 
@@ -162,9 +160,9 @@ function spawnButterfly() {
 
   game.appendChild(butterfly);
 
-  // Плавное движение влево-вправо
-  const amplitude = Math.random() * 50 + 20; // амплитуда колебаний
-  const frequency = Math.random() * 0.002 + 0.001; // частота движения
+  // Медленное покачивание облака
+  const amplitude = Math.random() * 20 + 10; // небольшое колебание
+  const frequency = Math.random() * 0.0005 + 0.0002; // очень медленное
   const startTime = performance.now();
 
   function animateSideToSide(time) {
